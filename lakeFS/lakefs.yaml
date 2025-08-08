@@ -1,0 +1,120 @@
+listen_address: "0.0.0.0:8000"
+
+tls:
+  enabled: false
+  cert_file: ""
+  key_file: ""
+
+actions:
+  enabled: true
+  lua:
+    net_http_enabled: false
+  env:
+    enabled: true
+    prefix: "LAKEFSACTION_"
+
+logging:
+  level: "INFO"
+  format: "text"
+  output: ["-", "/root/lakefs/logs/lakefs.log"]
+
+database:
+  type: "postgres"
+  postgres:
+    connection_string: "postgres://lakefs_user:secret@localhost:5432/lakefs?sslmode=disable"
+
+blockstore:
+  type: "s3"
+  s3:
+    region: "cn-southwest-1"
+    max_retries: 3
+    discover_bucket_region: false
+    pre_signed_expiry: 30m
+    disable_pre_signed: false
+    disable_pre_signed_ui: false
+    disable_pre_signed_multipart: false
+    client_log_retries: true
+    client_log_request: true
+    credentials:
+      access_key_id: "lakefs_user"
+      secret_access_key: "yinbangtao-minio-password"
+    endpoint: "http://localhost:9000"  # if using MinIO
+    force_path_style: true
+
+committed:
+  local_cache:
+    size_bytes: 1073741824  # 1 GB
+    dir: "/root/lakefs/data/cache"
+    max_uploaders_per_writer: 10
+    range_proportion: 0.9
+    metarange_proportion: 0.1
+  block_storage_prefix: lakefs"
+  permanent:
+    min_range_size_bytes: 0
+    max_range_size_bytes: 20971520
+    range_raggedness_entries: 50000
+  sstable:
+    memory:
+      cache_size_bytes: 67108864  # 64 MB
+
+ugc:
+  prepare_max_file_size: 20971520  # 20 MB
+  prepare_interval: 5m
+
+graveler:
+  ensure_readable_root_namespace: true
+  batch_dbio_transaction_markers: false
+  compaction_sensor_threshold: 10
+  repository_cache:
+    size: 100
+    expiry: 5m
+    jitter: 1m
+  commit_cache:
+    size: 50000
+    expiry: 10m
+    jitter: 2m
+  background:
+    rate_limit: 10
+  max_batch_delay: 100ms
+  branch_ownership:
+    enabled: false
+    refresh: 600ms
+    acquire: 300ms
+
+gateways:
+  s3:
+    domain_name: []
+    region: ""
+    fallback_url: ""
+    verify_unsupported: false
+
+stats:
+  enabled: false
+  address: "https://stats.lakefs.io"
+  flush_interval: 1m
+  flush_size: 100
+  extended: false
+
+email_subscription:
+  enabled: false  # default to true in lakeFS
+
+installation:
+  fixed_id: "yinbangtao-19930718"
+  user_name: "Yin Bangtao"
+  access_key_id: "realrabbit"
+  secret_access_key: "cranberries"
+  allow_inter_region_storage: false
+
+security:
+  check_latest_version: false
+  check_latest_version_cache: 1h
+  audit_check_interval: 12h
+  audit_check_url: "https://security.lakefs.io/audit"
+
+usage_report:
+  enabled: true
+  flush_interval: 1h
+
+auth:
+  encrypt:
+    secret_key: "YkPzKX5dkVfXxYpHTc6uv+udQRcVBgYpkvlpJ4FEKlo="
