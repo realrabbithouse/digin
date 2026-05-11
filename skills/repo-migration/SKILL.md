@@ -1,6 +1,6 @@
 ---
 name: repo-migration
-description: Migrate code between two diverged Git repositories when simple git merge or cherry-pick is not feasible. Use when repositories have diverged significantly (hundreds of commits), when you need to port features from source to fork or vice versa, when repositories have incompatible histories, or when you want to selectively migrate features rather than entire branches. This skill handles commit analysis, feature grouping, migration planning, and code migration with verification. Apply this skill whenever the user mentions repository migration, diverged branches, feature porting, or syncing forked repositories.
+description: Migrate code between two diverged Git repositories when simple git merge or cherry-pick is not feasible. Use when repositories have diverged significantly (hundreds of commits), when you need to port features from source to fork or vice versa, when repositories have incompatible histories, or when you want to selectively migrate features rather than entire branches. This skill handles commit analysis, feature grouping, migration planning, and code migration with verification. Apply this skill whenever the user mentions repository migration, diverged branches, feature porting, or syncing forked repositories. IMPORTANT: Execute each feature migration in a separate subagent or plan mode to avoid agent drift - never migrate multiple features in a single context.
 ---
 
 # Repository Migration Skill
@@ -13,6 +13,7 @@ This skill migrates code between two diverged Git repositories when traditional 
 2. **Human in the loop**: Key decisions require human verification before proceeding.
 3. **Verifiable migrations**: Each feature migration is tested against existing or new test cases.
 4. **Subagent execution**: Use subagents for heavy analytical work to keep context clean.
+5. **Isolated feature migration**: Use plan mode or subagent mode for each feature migration. Each feature gets its own clean context to avoid agent drift. Never attempt to migrate multiple features in a single context.
 
 ---
 
@@ -489,6 +490,94 @@ After user approval, create `artifacts/step4_migration_plan.json`:
 
 ---
 
+## Isolated Feature Migration Execution
+
+**IMPORTANT**: To avoid agent drift, each feature migration MUST execute in its own isolated context. Do NOT attempt to migrate multiple features in a single conversation or task.
+
+### Why Isolated Execution?
+
+When migrating features in a single long-running context:
+- Context window fills up with accumulated artifacts
+- Previous decisions leak into new decisions
+- Risk of inconsistent migration approaches
+- Hard to track which changes belong to which feature
+
+### Execution Modes
+
+**Option A: Subagent Mode (Recommended)**
+```
+For each feature in migration_order:
+  1. Spawn a subagent with:
+     - Feature details from step4_migration_plan.json
+     - Artifacts directory path
+     - The feature's specific actions and verification commands
+  2. Subagent executes the migration in clean context
+  3. Subagent writes results to feature-specific artifact
+  4. Subagent completes and returns
+```
+
+**Option B: Plan Mode**
+```
+For each feature in migration_order:
+  1. Enter plan mode with feature context
+  2. Read migration plan for this specific feature
+  3. Execute migration steps
+  4. Write results to artifacts/step5_<feature_id>_results.json
+  5. Exit plan mode
+  6. Continue to next feature
+```
+
+### Per-Feature Artifact
+
+Each feature migration produces `artifacts/step5_<feature_id>_migration.json`:
+
+```json
+{
+  "feature_id": "feat-001",
+  "status": "completed | failed | deferred",
+  "execution_mode": "subagent | plan",
+  "subagent_id": "<if used>",
+  "actions_executed": [
+    {
+      "step": 1,
+      "command": "git checkout ...",
+      "result": "success | failed"
+    }
+  ],
+  "conflicts_resolved": [
+    {
+      "file": "src/auth.go",
+      "resolution": "merged changes from both sides"
+    }
+  ],
+  "verification": {
+    "tests_run": true,
+    "tests_passed": true,
+    "manual_review": "pending"
+  },
+  "artifacts_created": ["<files modified>"],
+  "commit_hash": "<new commit hash>",
+  "issues": []
+}
+```
+
+### Context Management Rules
+
+1. **Before starting a feature**: Read only the artifacts needed for this feature
+2. **During migration**: Do not reference artifacts from other features
+3. **After completing feature**: Write results and clear feature-specific context
+4. **Between features**: Return to main context, then spawn new subagent/plan mode
+
+### Human Checkpoints
+
+After each feature migration:
+1. Present results to human
+2. Human reviews verification output
+3. Human approves or requests adjustments
+4. Only then proceed to next feature
+
+---
+
 ## Step 5: Code Migration
 
 **Execute migrations one feature at a time**. Use subagents for isolation.
@@ -624,6 +713,7 @@ All artifacts MUST use the `step<number>_<description>.json` format:
 4. **Keep human in the loop** for decisions and conflict resolution
 5. **Verify at every step** before proceeding to next
 6. **Document everything** in artifacts for auditability
+7. **Use plan mode or subagent mode for each feature migration** — never migrate multiple features in a single context
 
 ---
 
