@@ -1,0 +1,48 @@
+{
+  "skill_name": "repo-migration",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I have two diverged Go repositories. The source is at github.com/acme/core-lib (branch main), the fork is at github.com/myteam/core-lib-fork (branch develop). They've diverged for about 300 commits and simple cherry-pick keeps failing due to conflicts. I need to migrate the new feature flags and config system from source to the fork. The direction is source -> fork.",
+      "expected_output": "A complete migration plan with per-commit analysis, feature grouping, impact analysis, and user approval phase in artifacts/",
+      "files": [],
+      "expectations": [
+        "step1_repository_analysis.json exists with divergence metrics",
+        "step1_commits_detail.json exists with per-commit analysis including type, problem, affected components",
+        "step2_features.json identifies feature grouping for the feature flags and config system",
+        "step3_impact_analysis.json includes migration impact for Go-specific changes",
+        "step4_user_decisions.json exists (required for human approval before migration)",
+        "step4_migration_plan.json contains actionable migration steps (generated only after user approval)"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "We forked a Go microservices repo 6 months ago and made a lot of changes independently. Now the upstream (source) has a new authentication middleware we want. Our fork is at /workspace/our-services (branch custom), source is at github.com/upstream/services (branch main). I want to migrate the auth middleware specifically - not the whole repo. Direction: source -> fork.",
+      "expected_output": "Focused migration artifacts for just the authentication middleware feature, with per-commit analysis showing auth-related commits",
+      "files": [],
+      "expectations": [
+        "step1_repository_analysis.json shows divergence analysis",
+        "step1_commits_detail.json identifies auth middleware commits with affected Go components (struct/function/module)",
+        "step2_features.json isolates auth middleware as a single feature",
+        "step3_impact_analysis.json identifies API breaking changes and test gaps",
+        "step4_user_decisions.json requires explicit approval before plan generation",
+        "step4_migration_plan.json has specific conflict resolution steps for auth code",
+        "Feature can be migrated independently without pulling unrelated changes"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Help me sync my forked Go CLI tool back to the upstream. I've made improvements to the command structure and output formatting in my fork (github.com/me/cli-tool, branch my-changes), and now the upstream (github.com/original/cli-tool, branch main) has those changes. Direction: fork -> source. This is about migrating my improvements back upstream.",
+      "expected_output": "Migration plan for porting fork improvements to source repository, with commit analysis showing improvement commits",
+      "files": [],
+      "expectations": [
+        "step1_repository_analysis.json uses fork->source direction",
+        "step1_commits_detail.json shows CLI improvement commits with problem/code_change/affected_components",
+        "step2_features.json groups CLI improvements by command structure and output formatting",
+        "step4_user_decisions.json requires user approval before generating migration plan",
+        "step4_migration_plan.json targets upstream main branch",
+        "Feature grouping enables selective migration of only the desired improvements"
+      ]
+    }
+  ]
+}
